@@ -1,6 +1,6 @@
 import { toRad, toDeg } from "./util.js";
 
-const DEBUG = false; // Show debug info/bodies
+export const DEBUG = true; // Show debug info/bodies
 
 // Monster constants
 const TYPE_CHASER = "chaser";

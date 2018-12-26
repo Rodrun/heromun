@@ -2,11 +2,6 @@
 import {
     Entity
 } from "./entity.js";
-import {
-    vectorDifference,
-    Vector,
-    toDeg
-} from "./util.js";
 
 /**
  * On-screen DPad. This assumes the DPad is circular.
@@ -24,23 +19,26 @@ export class DPad extends Entity {
         super(game);
         this.angle = 0; // Input angle in radians
         this.active = false; // Is being touched?
-        this.sprite = game.add.sprite(x, y, "dpad");
+        this.sprite = game.add.button(x, y, "dpad", () => { }, this);
+        game.physics.arcade.enable(this.sprite);
         this.sprite.alpha = alpha || .5;
         this.sprite.smoothed = false;
         this.sprite.scale.setTo(w, w);
+        //this.sprite.body.setCircle(this.sprite.body.halfWidth);
         this.sprite.anchor.setTo(.5, .5);
-        game.physics.arcade.enable(this.sprite);
-        this.sprite.body.setCircle(this.sprite.body.halfWidth);
         this.sprite.inputEnabled = true;
-        //this.sprite.fixedToCamera = true;
+        this.sprite.fixedToCamera = false;
+        this.activePointer = null;
 
         // Disable active property
-        this.sprite.events.onInputOut.add(() => {
+        this.sprite.onInputUp.add(() => {
             this.active = false;
+            this.activePointer = null;
         }, this);
         // Enable active property
-        this.sprite.events.onInputOver.add(() => {
+        this.sprite.onInputDown.add(() => {
             this.active = true;
+            this.activePointer = this.game.input.activePointer;
         }, this);
     }
 
@@ -49,7 +47,8 @@ export class DPad extends Entity {
         // Calculate angle on active input
         if (this.active) {
             // In radians
-            this.angle = this.game.physics.arcade.angleToPointer(this.sprite);
+            this.angle = this.game.physics.arcade.angleToPointer(this.sprite,
+                this.activePointer);
         }
     }
 

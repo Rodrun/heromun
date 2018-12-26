@@ -40,3 +40,7 @@ export class Vector {
         this.y = y;
     }
 }
+
+export function vectorFromSprite(sp) {
+    return new Vector(sp.x, sp.y);
+}

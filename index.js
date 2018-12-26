@@ -5,7 +5,7 @@
  * By Juan Mendez.
  */
 import { Intro } from "./intro.js";
-import { DemonMonster, EyeMonster, Weapon, Hero } from "./entity.js";
+import { DEBUG, DemonMonster, EyeMonster, Weapon, Hero } from "./entity.js";
 import { getRandomInt } from "./util.js";
 import { DPad } from "./dpad.js";
 
@@ -23,35 +23,6 @@ function Button(x, y, scale, imageName, onDown, onUp) {
     button.onInputUp.add(onUp, this);
     //button.fixedToCamera = true;
     return button;
-}
-
-/**
- * Show "sign" that wiggles. Will return to original position when done.
- * @param {*} sprite 
- * @param {*} x New x.
- * @param {*} y New y.
- * @param {*} duration Duration of sign showing
- * @param {*} onComplete Supplementary callback on completion of animation.
- */
-function showSign(sprite, x, y, duration, onComplete) {
-    const prevX = sprite.x;
-    const prevY = sprite.y;
-    sprite.x = x;
-    sprite.y = y;
-    let wiggle = game.add.tween(sprite)
-        .to({
-                y: sprite.y + (sprite.height * .45)
-            }, // properties
-            duration, // duration
-            Phaser.Easing.Elastic.InOut,
-            true, // autostart
-        );
-    wiggle.onComplete.addOnce(() => {
-        sprite.x = prevX;
-        sprite.y = prevY;
-        if (onComplete != null)
-            onComplete();
-    }, this);
 }
 
 class Game extends Phaser.State {
@@ -111,15 +82,6 @@ class Game extends Phaser.State {
         this.hero = new Hero(game, WIDTH / 2, HEIGHT / 2);
 
         this.monsters = game.add.group();
-        //let eye = new EyeMonster(this.hero.x - 80, HEIGHT / 2, 4, this.hero);
-        for (let i = 0; i < 2; i++) {
-            let demon = new DemonMonster(game, getRandomInt(WIDTH), getRandomInt(HEIGHT),
-                4, this.hero);
-            let eye = new EyeMonster(game, getRandomInt(WIDTH), getRandomInt(HEIGHT),
-                4, this.hero);
-            this.addMonster(demon);
-            this.addMonster(eye);
-        }
 
         // Weapon
         this.weapon = new Weapon(game, this.hero, "sword", "axe", 1, 3, 4);
@@ -137,7 +99,7 @@ class Game extends Phaser.State {
         this.attackButton.y -= BTN_WIDTH * 2;
 
         // DPad
-        this.dpad = new DPad(game, 0, HEIGHT, 2.25);
+        this.dpad = new DPad(game, game.camera.x, game.camera.height, 2.25);
         const dpadWidth = this.dpad.sprite.width;
         this.dpad.sprite.x += dpadWidth * .75;
         this.dpad.sprite.y -= dpadWidth * .75;
