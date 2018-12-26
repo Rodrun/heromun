@@ -85,7 +85,7 @@ export class Monster extends Entity {
         super.render();
     }
 
-    // Update monster to bounce backwards
+    // Update monster to bounce backwards (if bounceBack = true)
     bounceUpdate(sprite) {
         if (this.bounceBack) {
             this.bounceTicks += 1;
@@ -121,21 +121,6 @@ export class Monster extends Entity {
 
         // Fix facing angle after calculating velocity to simplify things
         this.sprite.angle += 90;
-        /** 
-        if (angle < 180 && angle < 270) {
-            // Detected to the left
-            sprite.velocity.x = speed;
-        } else { // Detected to the right
-            sprite.velocity.x = -speed;
-        }
-
-        if (angle < 270 && angle > 90) {
-            // Detected above
-            sprite.velocity.y = speed;
-        } else { // Detected below
-            sprite.velocity.y = -speed;
-        }
-        */
     }
 
     isAlive() {
@@ -181,6 +166,7 @@ export class Weapon extends Entity {
     constructor(game, hero, sword, axe, damageSword, damageAxe, scale) {
         super(game);
         this.sprite = this.game.add.sprite(hero.x, hero.y, sword);
+        game.physics.arcade.enable(this.sprite);
         this.hero = hero;
         this.axe = axe; // Reference to axe image name
         this.sprite.smoothed = false;
@@ -193,6 +179,7 @@ export class Weapon extends Entity {
     }
 
     update() {
+        super.update();
         // Updates the tick if in attack state
         if (this.attack) {
             let hero = this.hero.sprite;
@@ -227,7 +214,8 @@ export class Weapon extends Entity {
     }
 }
 
-const VELOCITY = 140;
+// Speed of Hero
+const SPEED = 140;
 
 export class Hero extends Entity {
     constructor(game, x, y) {
@@ -239,65 +227,6 @@ export class Hero extends Entity {
         this.sprite.smoothed = false;
         this.sprite.scale.setTo(4, 4);
         game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
-    
-
-        // Hero state & config //
-        /**
-         * Movement info for the hero in the x & y directions.
-         */
-        this.heroMovementsInfo = Object.freeze({
-            y: {
-                velocity: VELOCITY,
-                name: "y", // String name of axis
-                angle: 0 // default up
-            },
-            x: {
-                velocity: VELOCITY,
-                name: "x", // String name of axis
-                angle: 90 // default to right
-            }
-        });
-
-        /**
-         * Hero movement configuration and state.
-         * 
-         * Each movement type has a "coord", which is an appropriate
-         * object from heroMovementsInfo; a "mod", which should
-         * be used to figure out the angle of the movement direction
-         * via multiplication; an "angleAdd" which should be added to the
-         * already given angle by coord; and "active" property, which should be
-         * set if the hero is commanded to perform the movement (should
-         * also be the only modified value).
-         * 
-         * Therefore:
-         * 
-         * Hero velocity = coord.velocity * mod
-         * Hero movement angle = coord.angle + angleAdd
-         * 
-         * @see heroMovementsInfo
-         */
-        this.heroMovements = Object.freeze({
-            up: {
-                coord: this.heroMovementsInfo.y,
-                mod: -1,
-                angleAdd: 0,
-            },
-            down: {
-                coord: this.heroMovementsInfo.y,
-                mod: 1,
-                angleAdd: 180,
-            },
-            left: {
-                coord: this.heroMovementsInfo.x,
-                mod: -1,
-                angleAdd: 180,
-            },
-            right: {
-                coord: this.heroMovementsInfo.x,
-                mod: 1,
-                angleAdd: 0,
-            }
-        });
     }
 
     update() {
@@ -309,31 +238,16 @@ export class Hero extends Entity {
     }
 
     /**
-     * Command a hero movement.
-     * 
-     * @param dir Direction string, with a + or - and the name of the direction.
-     *      + signifies perform, - signifies stop performing.
-     *      For example:
-     *      "+ up" = Move up; "- left" stop moving left.
+     * Move the hero.
+     * @param angle Angle in radians.
+     * @param speed Percent of full speed of hero.
+     * @param faceAngle Angle in radians of where the sprite is "facing".
+     *      Leave unset to automatically calculate.
      */
-    move(dir) {
-        const split = dir.split(" ");
-        if (split.length >= 2) {
-            try {
-                let {
-                    coord, // info
-                    mod, // direction mod
-                    angleAdd // angle supplement
-                } = this.heroMovements[split[1]];
-                // Set proper directional velocity
-                this.sprite.body.velocity[coord.name] = split[0] == "+" ?
-                    coord.velocity * mod : 0;
-                // Set proper angle
-                this.sprite.angle = coord.angle + angleAdd;
-                console.log(this.sprite.angle);
-            } catch (err) {
-                console.warn("unable to perform hero movement: " + err);
-            }
-        }
+    move(angle, percent, faceAngle) {
+        const speed = SPEED * percent;
+        this.sprite.rotation = angle + Math.PI / 2;
+        this.sprite.body.velocity.x = Math.cos(angle) * speed;
+        this.sprite.body.velocity.y = Math.sin(angle) * speed;
     }
 }

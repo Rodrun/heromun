@@ -1,3 +1,5 @@
+// Useful utilities module
+
 // Convert given radians to degrees
 export function toDeg(rad) {
     return rad * 180 / Math.PI;
@@ -13,6 +15,16 @@ export function distanceBetween(x1, y1, x2, y2) {
     let a = x2 - x1;
     let b = y2 - y1;
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
+}
+
+// Get distance between two vectors
+export function distanceBetweenVec(a, b) {
+    return distanceBetween(a.x, a.y, b.x, b.y);
+}
+
+// Get the difference between two vectors.
+export function vectorDifference(a, b) {
+    return new Vector(b.x - a.x, b.y - a.y);
 }
 
 export function getRandomInt(max) { // range: [0, max)

@@ -7,20 +7,13 @@
 import { Intro } from "./intro.js";
 import { DemonMonster, EyeMonster, Weapon, Hero } from "./entity.js";
 import { getRandomInt } from "./util.js";
+import { DPad } from "./dpad.js";
 
 const WIDTH = window.innerWidth;
 const HEIGHT = window.innerHeight;
 
-// Game states
-// *_FIRE = meant to be a loading state/one frame
-const INTRO_FIRE = 0;
-const INTRO = .5;
-const GAMEPLAY_FIRE = 1;
-const GAMEPLAY = 1.5;
-
 var game = new Phaser.Game(WIDTH, HEIGHT,
     Phaser.AUTO, "Heromun");
-var graphics = null; // define later
 
 // Long-clickable button for user
 function Button(x, y, scale, imageName, onDown, onUp) {
@@ -28,6 +21,7 @@ function Button(x, y, scale, imageName, onDown, onUp) {
     button.scale.setTo(scale, scale);
     button.onInputDown.add(onDown, this);
     button.onInputUp.add(onUp, this);
+    //button.fixedToCamera = true;
     return button;
 }
 
@@ -63,7 +57,6 @@ function showSign(sprite, x, y, duration, onComplete) {
 class Game extends Phaser.State {
     constructor() {
         super();
-        this.gameState = GAMEPLAY; // TODO remove this
         //this.gameSignal = new Phaser.Signal();
         // Input
         this.upButton;
@@ -78,9 +71,6 @@ class Game extends Phaser.State {
         this.title; // Title sprite
         this.points = 0; // 1 for every kill
         this.isSwitchingWeapon = false; // Should be true for one frame
-        this.heroDirection = "up"; // Weapon follows this
-        this.heroHealth = 6;
-        this.heroDamage = 1; // Axe does 3x damage
         this.healthPositions; // Health orb group
         this.monsters; // Monster group
         this.monsterEntities = []; // Monster entity list
@@ -138,48 +128,33 @@ class Game extends Phaser.State {
         this.critSign = game.add.sprite(-999, -999, "criticalhit");
         this.critSign.anchor.setTo(.5, .5);
 
-        // Set up DPAD & attack buttons 
+        // Attack button
         const BTN_SCALE = 1;
-        this.leftButton = new Button(0, HEIGHT, BTN_SCALE, "dpad",
-            () => this.move("+ left"), () => this.move("- left"));
-        this.rightButton = new Button(0, HEIGHT, BTN_SCALE, "dpad",
-            () => this.move("+ right"), () => this.move("- right"));
-        this.upButton = new Button(0, HEIGHT, BTN_SCALE, "dpad",
-            () => this.move("+ up"), () => this.move("- up"));
-        this.downButton = new Button(0, HEIGHT, BTN_SCALE, "dpad",
-            () => this.move("+ down"), () => this.move("- down"));
         this.attackButton = new Button(WIDTH, HEIGHT, BTN_SCALE, "attackbutton",
             () => this.attack(this.weapon), () => { });
-
-        const BTN_WIDTH = this.leftButton.width;
-        // Set button x
-        //this.leftButton.x += 0;
-        this.rightButton.x += BTN_WIDTH * 2;
-        this.upButton.x += BTN_WIDTH;
-        this.downButton.x += this.upButton.x;
+        const BTN_WIDTH = this.attackButton.width;
         this.attackButton.x -= BTN_WIDTH * 1.5;
-        // Set button y
-        this.leftButton.y -= BTN_WIDTH * 2;
-        this.rightButton.y -= BTN_WIDTH * 2;
-        this.upButton.y -= BTN_WIDTH * 3;
-        this.downButton.y -= BTN_WIDTH;
         this.attackButton.y -= BTN_WIDTH * 2;
+
+        // DPad
+        this.dpad = new DPad(game, 0, HEIGHT, 2.25);
+        const dpadWidth = this.dpad.sprite.width;
+        this.dpad.sprite.x += dpadWidth * .75;
+        this.dpad.sprite.y -= dpadWidth * .75;
     }
 
     update() {
+        this.dpad.update();
         this.hero.update();
+        this.hero.move(this.dpad.angle, this.dpad.active ? 1 : 0);
         this.weapon.update();
         this.monsterEntities.forEach((monster, i) => {
             monster.update();
         });
     }
-    
-    // Call the hero's move function
-    move(dir) {
-        this.hero.move(dir);
-    }
 
     render() {
+        this.dpad.render();
         this.hero.render();
         this.weapon.render();
         this.monsterEntities.forEach((monster) => {
