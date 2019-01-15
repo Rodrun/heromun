@@ -5,9 +5,11 @@
  * By Juan Mendez.
  */
 import { Intro } from "./intro.js";
-import { DEBUG, DemonMonster, EyeMonster, Weapon, Hero } from "./entity.js";
-import { getRandomInt } from "./util.js";
+import { DEBUG, DemonMonster, EyeMonster, Weapon } from "./entity.js";
+import { Weapons } from "./info.js";
+import { Hero } from "./hero.js";
 import { DPad } from "./dpad.js";
+import { cap } from "./util.js";
 
 const WIDTH = window.innerWidth;
 const HEIGHT = window.innerHeight;
@@ -30,11 +32,7 @@ class Game extends Phaser.State {
         super();
         //this.gameSignal = new Phaser.Signal();
         // Input
-        this.upButton;
-        this.downButton;
-        this.leftButton;
-        this.rightButton;
-        this.attackButton;
+        this.dpad;
 
         // Entity
         this.hero; // Player
@@ -54,7 +52,7 @@ class Game extends Phaser.State {
     }
 
     preload() {
-        // TODO: spritesheets
+        // TODO: atlas for textures
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
         game.load.image("heromun", "assets/heromun.png");
@@ -71,6 +69,8 @@ class Game extends Phaser.State {
         game.load.image("eye", "assets/eye0.png");
         game.load.image("demon", "assets/demon0.png");
         game.load.image("healthorb", "assets/healthorb.png");
+
+        game.load.image("gravel", "assets/gravel.png"); // Test
     }
 
     /**
@@ -84,11 +84,7 @@ class Game extends Phaser.State {
         this.monsters = game.add.group();
 
         // Weapon
-        this.weapon = new Weapon(game, this.hero, "sword", "axe", 1, 3, 4);
-        this.weaponSign = game.add.sprite(-999, -999, "ono"); // Show when axe given
-        this.weaponSign.anchor.setTo(.5, .5);
-        this.critSign = game.add.sprite(-999, -999, "criticalhit");
-        this.critSign.anchor.setTo(.5, .5);
+        this.weapon = new Weapon(game, this.hero, 4, Weapons.axe, false);
 
         // Attack button
         const BTN_SCALE = 1;
@@ -108,9 +104,9 @@ class Game extends Phaser.State {
     update() {
         this.dpad.update();
         this.hero.update();
-        this.hero.move(this.dpad.angle, this.dpad.active ? 1 : 0);
+        this.hero.move(this.dpad.angle, this.dpad.active ? cap(this.dpad.percent, 1) : 0);
         this.weapon.update();
-        this.monsterEntities.forEach((monster, i) => {
+        this.monsterEntities.forEach((monster) => {
             monster.update();
         });
     }

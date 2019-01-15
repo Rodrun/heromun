@@ -1,6 +1,6 @@
-import { toRad, toDeg } from "./util.js";
+import { toRad, toDeg, Vector, getRandomInt } from "./util.js";
 
-export const DEBUG = true; // Show debug info/bodies
+export const DEBUG = false; // Show debug info/bodies
 
 // Monster constants
 const TYPE_CHASER = "chaser";
@@ -163,31 +163,37 @@ export class DemonMonster extends Monster {
 }
 
 export class Weapon extends Entity {
-    constructor(game, hero, sword, axe, damageSword, damageAxe, scale) {
+    /**
+     * @param {*} game Phaser Game object.
+     * @param {*} hero Hero object.
+     * @param {*} scale Sprite scale.
+     * @param {*} weaponInfo Weapon info object (see info.js).
+     */
+    constructor(game, hero, scale, weaponInfo, critsEnabled) {
         super(game);
-        this.sprite = this.game.add.sprite(hero.x, hero.y, sword);
+        this.weaponInfo = weaponInfo;
+        this.sprite = this.game.add.sprite(0, 0, weaponInfo.resource);
+        this.sprite.visible = false;
         game.physics.arcade.enable(this.sprite);
         this.hero = hero;
-        this.axe = axe; // Reference to axe image name
         this.sprite.smoothed = false;
         this.sprite.anchor.setTo(.5, .5);
         this.sprite.scale.setTo(scale, scale);
-        this.damage = damageSword;
-        this.damageAxe = damageAxe;
-        this.attack = false;
+        this.attack = false; // Currently attacking?
         this.tick = 0; // Visible ticks
+        this.critsEnabled = critsEnabled; // Crits enabled flag
+        this.criticalHit = false; // Attack was crit?
     }
 
     update() {
         super.update();
         // Updates the tick if in attack state
         if (this.attack) {
-            let hero = this.hero.sprite;
             // Update position
-            this.sprite.angle = hero.angle;
-            let b = (hero.width + this.sprite.width) / 2;
-            this.sprite.x = hero.x + (-b * Math.cos(hero.rotation + Math.PI / 2));
-            this.sprite.y = hero.y + (-b * Math.sin(hero.rotation + Math.PI / 2));
+            let front = this.getFrontOfHero();
+            this.sprite.x = front.x;
+            this.sprite.y = front.y;
+            this.sprite.rotation = this.hero.sprite.rotation;
 
             if (this.tick >= 20) {
                 this.tick = 0;
@@ -200,54 +206,19 @@ export class Weapon extends Entity {
         }
     }
 
-    render() {
-        super.render();
-    }
-    
-    switchTo(name) {
-        if (name == "sword") {
-            this.damageSword = damageSword; // May never be executed?
-        } else {
-            // Axe is assumed if not sword
-            this.damage = this.damageAxe;
-        }
-    }
-}
-
-// Speed of Hero
-const SPEED = 140;
-
-export class Hero extends Entity {
-    constructor(game, x, y) {
-        super(game);
-        const WIDTH = this.game.world.width;
-        const HEIGHT = this.game.world.height;
-        this.sprite = game.add.sprite(WIDTH / 2, HEIGHT / 2, "heromun");
-        this.sprite.anchor.setTo(.5, .5);
-        this.sprite.smoothed = false;
-        this.sprite.scale.setTo(4, 4);
-        game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
-    }
-
-    update() {
-        super.update();
-    }
-
-    render() {
-        super.render();
-    }
-
     /**
-     * Move the hero.
-     * @param angle Angle in radians.
-     * @param speed Percent of full speed of hero.
-     * @param faceAngle Angle in radians of where the sprite is "facing".
-     *      Leave unset to automatically calculate.
+     * Get the center Vector in front of the hero.
+     * @return Vector.
      */
-    move(angle, percent, faceAngle) {
-        const speed = SPEED * percent;
-        this.sprite.rotation = angle + Math.PI / 2;
-        this.sprite.body.velocity.x = Math.cos(angle) * speed;
-        this.sprite.body.velocity.y = Math.sin(angle) * speed;
+    getFrontOfHero() {
+        let hero = this.hero.sprite;
+        let b = (hero.width + this.sprite.width) / 2;
+        let x = hero.x + (-b * Math.cos(hero.rotation + Math.PI / 2));
+        let y = hero.y + (-b * Math.sin(hero.rotation + Math.PI / 2));
+        return new Vector(x, y);
+    }
+
+    render() {
+        super.render();
     }
 }

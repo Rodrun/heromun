@@ -44,3 +44,8 @@ export class Vector {
 export function vectorFromSprite(sp) {
     return new Vector(sp.x, sp.y);
 }
+
+// Cap a number at max
+export function cap(n, max) {
+    return n > max ? max : n;
+}

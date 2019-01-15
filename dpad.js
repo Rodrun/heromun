@@ -18,6 +18,12 @@ export class DPad extends Entity {
     constructor(game, x, y, w, alpha) {
         super(game);
         this.angle = 0; // Input angle in radians
+        /**
+         * Percentage of input position from edges.
+         * Good for determining desired speed; i.e. input closer to
+         * edge (approaching 100%) means faster speed of player.
+         */
+        this.percent = 0;
         this.active = false; // Is being touched?
         this.sprite = game.add.button(x, y, "dpad", () => { }, this);
         game.physics.arcade.enable(this.sprite);
@@ -44,11 +50,13 @@ export class DPad extends Entity {
 
     update() {
         super.update();
-        // Calculate angle on active input
+        // Calculations on active input
         if (this.active) {
             // In radians
             this.angle = this.game.physics.arcade.angleToPointer(this.sprite,
                 this.activePointer);
+            this.percent = this.game.physics.arcade.distanceToPointer(this.sprite,
+                this.activePointer) / (this.sprite.width / 2);
         }
     }
 
@@ -63,10 +71,4 @@ export class DPad extends Entity {
         return this.active;
     }
 
-    /**
-     * Get the input angle in radians.
-     */
-    getAngle() {
-        return this.angle;
-    }
 }
